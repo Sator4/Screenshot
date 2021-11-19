@@ -210,16 +210,28 @@ class Screenshot : Application() {
 
 
         selectCheck.onAction = EventHandler {  // стереть canvasSelecting при убирании галочки
-            println("selecting = $selecting")
+//            println("selecting = $selecting")
             if (!selectCheck.isSelected){
                 canvasSelecting.graphicsContext2D.clearRect(0.0, 0.0, canvasSelecting.width, canvasSelecting.height)
                 selecting = false
+                sel_x = 0.0
+                sel_y = 0.0
+                last_x = screenWidth
+                last_y = screenHeight
             }
         }
 
 
 
         takeScreenshot.onAction = EventHandler {    // сделать скриншот
+            canvasImage.height = screenHeight * windowScale / imageScale
+            canvasImage.width = screenWidth * windowScale / imageScale
+            canvasDrawing.height = screenHeight * windowScale / imageScale
+            canvasDrawing.width = screenWidth * windowScale / imageScale
+            canvasSelecting.height = screenHeight * windowScale / imageScale
+            canvasSelecting.width = screenWidth * windowScale / imageScale
+
+
             var snapDelay = round(slider.value * 10000) * 0.1
             if (minimizeCheck.isSelected){
                 snapDelay += 200
@@ -228,7 +240,7 @@ class Screenshot : Application() {
 
             Timer().schedule(snapDelay.toLong()) {
                 Platform.runLater{
-                    println("Delay = $snapDelay ms")
+//                    println("Delay = $snapDelay ms")
                     saveAsPng()
                     primaryStage.isIconified = false
                     val fileName = getFileName()
@@ -287,8 +299,10 @@ class Screenshot : Application() {
                 params.fill = Color.TRANSPARENT
                 val image1 = canvasImage.snapshot(params, null)
                 val image2 = canvasDrawing.snapshot(params, null)
-                val croppedImage = WritableImage(image1.pixelReader, min(sel_x, last_x).toInt(), min(sel_y, last_y).toInt(), abs(sel_x - last_x).toInt(), abs(sel_y - last_y).toInt())
-                val croppedDrawing = WritableImage(image2.pixelReader, min(sel_x, last_x).toInt(), min(sel_y, last_y).toInt(), abs(sel_x - last_x).toInt(), abs(sel_y - last_y).toInt())
+                val croppedImage = WritableImage(image1.pixelReader, min(sel_x, last_x).toInt(), min(sel_y, last_y).toInt(),
+                    abs(sel_x - last_x).toInt(), abs(sel_y - last_y).toInt())
+                val croppedDrawing = WritableImage(image2.pixelReader, min(sel_x, last_x).toInt(), min(sel_y, last_y).toInt(),
+                    abs(sel_x - last_x).toInt(), abs(sel_y - last_y).toInt())
 
                 canvasImage.graphicsContext2D.clearRect(0.0, 0.0, canvasImage.width, canvasImage.height)
                 canvasImage.graphicsContext2D.drawImage(croppedImage, 0.0, 0.0)
@@ -348,13 +362,13 @@ class Screenshot : Application() {
             currentStackPaneScale.x *= 1.25
             currentStackPaneScale.y *= 1.25
             stackPane.transforms.setAll(currentStackPaneScale)
-            println(currentStackPaneScale)
+//            println(currentStackPaneScale)
         }
         minusButton.onAction = EventHandler {
             currentStackPaneScale.x /= 1.25
             currentStackPaneScale.y /= 1.25
             stackPane.transforms.setAll(currentStackPaneScale)
-            println(currentStackPaneScale)
+//            println(currentStackPaneScale)
         }
         zeroButton.onAction = EventHandler {
             currentStackPaneScale = Scale(imageScale, imageScale)
@@ -377,12 +391,17 @@ class Screenshot : Application() {
 
             val image = Image("file:\\$fileName")
 
-            canvasImage.width = image.width
-            canvasImage.height = image.height
-            canvasDrawing.width = image.width
-            canvasDrawing.height = image.height
-            canvasSelecting.width = image.width
-            canvasSelecting.height = image.height
+            if (image.width > canvasImage.width){
+                canvasImage.width = image.width
+                canvasDrawing.width = image.width
+                canvasSelecting.width = image.width
+
+            }
+            if (image.height > canvasImage.height){
+                canvasImage.height = image.height
+                canvasDrawing.height = image.height
+                canvasSelecting.height = image.height
+            }
 
             canvasImage.graphicsContext2D.drawImage(image, 0.0, 0.0)
             canvasDrawing.graphicsContext2D.clearRect(0.0, 0.0, canvasDrawing.width, canvasDrawing.height)
@@ -450,6 +469,7 @@ class Screenshot : Application() {
         else {
             ImageIO.write(bi, "png", File(getFileName()))
         }
+
     }
 
 
@@ -474,7 +494,7 @@ fun saveAsPng() {
         val screenRect = Rectangle(Toolkit.getDefaultToolkit().getScreenSize())
         val screenFullImage = robot.createScreenCapture(screenRect)
         ImageIO.write(screenFullImage, "png", File(fileName))
-        println("Done")
+//        println("Done")
     } catch (ex: IOException) {
         print(ex)
     }
